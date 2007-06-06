@@ -57,7 +57,7 @@ __END__
 
 =head1 NAME
 
-B<SVN::Access::Group> - Object representing a SVN Access file group!
+B<SVN::Access::Group> - Object representing a SVN Access file group
 
 =head1 SYNOPSIS
 
@@ -84,10 +84,10 @@ everyone = harry, sally, joe, frank, sally, jane
 
 =head1 METHODS
 
-=over 2
+=over 4
 
-=item
-B<new>
+=item B<new>
+
 the constructor, takes anything you want in hash form but im looking for 
 members (arrayref), and the name of the group.  the meat and potatoes if 
 you will.
@@ -100,22 +100,22 @@ Example:
 
   $group->add_member("janette");
 
-=item
-B<members>
+=item B<members>
+
 returns a list of the group's members.
 
 Example:
   my @members = $group->members;
 
-=item
-B<remove_member>
+=item B<remove_member>
+
 removes a member from the group.
 
 Example:
   $group->remove_member("ray");
 
-=item
-B<add_member>
+=item B<add_member>
+
 adds a member to the group.  returns an error string for some reason. this 
 is inconsistent with the rest of the interface, so expect either other methods 
 to start having this, or expect this functionality to go away.
@@ -127,8 +127,8 @@ Example:
   print $group->add_member("janette"):
   # should print "Member janette already in group Carpenters\n"
 
-=item
-B<member_exists>
+=item B<member_exists>
+
 returns true (the member's name) if the member exists.
 
 Example:
@@ -137,8 +137,8 @@ Example:
       $group->remove_member("ray"); # carpenters don't need SVN access anyway
   }
 
-=item
-B<name>
+=item B<name>
+
 light accessor method which returns the group's name.
 
 =back

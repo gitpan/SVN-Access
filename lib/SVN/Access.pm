@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub new {
     my ($class, %attr) = @_;
@@ -37,6 +37,9 @@ sub parse_acl {
         if ($line =~ /^\[\s*(.+?)\s*\][\r\n]+$/) {
             # this line is defining a new resource.
             $current_resource = $1;
+            unless ($current_resource eq "groups") {
+                $self->add_resource($current_resource);
+            }
         } else {
             # both groups and resources need this parsed.
             my ($k, $v) = $line =~ /^(.+?)\s*=\s*(.*)[\r\n]+$/;
@@ -72,9 +75,7 @@ sub write_acl {
     if ($self->groups) {
         print ACL "[groups]\n";
         foreach my $group ($self->groups) {
-            if ($group->members) {
-                print ACL $group->name . " = " . join(', ', $group->members) . "\n";
-            }
+            print ACL $group->name . " = " . join(', ', $group->members) . "\n";
         }
     }
     close(ACL);
@@ -87,11 +88,15 @@ sub write_pretty {
 
     # Compile a list of names that will appear on the left side
     my @names;
-    for ($self->groups) {
-        push(@names, $_->members);
+    if ($self->groups) {
+        for ($self->groups) {
+            push(@names, $_->name);
+        }
     }
-    for ($self->resources) {
-        push(@names, keys(%{$_->authorized}));
+    if ($self->resources) {
+        for ($self->resources) {
+            push(@names, keys(%{$_->authorized}));
+        }
     }
 
     # Go through that list looking for the longest name
@@ -112,9 +117,7 @@ sub write_pretty {
     if ($self->groups) {
         print ACL "[groups]\n";
         foreach my $group ($self->groups) {
-            if ($group->members) {
-                print ACL $group->name . " " x ($max_len - length($group->name)) . " = " . join(', ', $group->members) . "\n";
-            }
+            print ACL $group->name . " " x ($max_len - length($group->name)) . " = " . join(', ', $group->members) . "\n";
         }
     }
     close(ACL);
@@ -257,18 +260,18 @@ You're changed.>
 
 =head1 METHODS
 
-=over 2
+=over 4
 
-=item
-B<new>
+=item B<new>
+
 the constructor, takes key / value pairs.  only one is required.. in fact 
 only one is used right now.  acl_file.
 
 Example:
   my $acl = SVN::Access->new(acl_file   =>  '/path/to/my/acl.conf');
 
-=item
-B<add_resource>
+=item B<add_resource>
+
 adds a resource to the current acl object structure.  note: the changes 
 are only to the object structure in memory, and one must call the B<write_acl>
 method, or the B<write_pretty> method to commit them.
@@ -280,8 +283,8 @@ Example:
     gibb    =>  'r',
   );
 
-=item
-B<remove_resource>
+=item B<remove_resource>
+
 removes a resource from the current acl object structure.  as with B<add_resource>
 these changes are only to the object structure in memory, and must be commited 
 with a write_ method.
@@ -289,8 +292,8 @@ with a write_ method.
 Example:
   $acl->remove_resource('/');
 
-=item
-B<resources>
+=item B<resources>
+
 returns an array of resource objects, takes no arguments.
 
 Example:
@@ -298,15 +301,15 @@ Example:
       print $_->name . "\n";
   }
 
-=item
-B<resource>
+=item B<resource>
+
 resolves a resource name to its B<SVN::Access::Resource> object.
 
 Example:
   my $resource = $acl->resource('/');
 
-=item
-B<add_group>
+=item B<add_group>
+
 adds a group to the current acl object structure.  these changes are 
 only to the object structure in memory, and must be written out with 
 B<write_acl> or B<write_pretty>.
@@ -314,8 +317,8 @@ B<write_acl> or B<write_pretty>.
 Example:
   $acl->add_group('stooges', 'larry', 'curly', 'moe', 'shemp');
 
-=item
-B<remove_group>
+=item B<remove_group>
+
 removes a group from the current acl object structure.  these changes
 are only to the object structure in memory, and must be written out 
 with B<write_acl> or B<write_pretty>.
@@ -323,8 +326,8 @@ with B<write_acl> or B<write_pretty>.
 Example:
   $acl->remove_group('stooges');
 
-=item
-B<groups>
+=item B<groups>
+
 returns an array of group objects, takes no arguments.
 
 Example:
@@ -332,23 +335,23 @@ Example:
       print $_->name . "\n";
   }
 
-=item
-B<group>
+=item B<group>
+
 resolves a group name to its B<SVN::Access::Group> object.
 
 Example:
   $acl->group('pants_wearers')->add_member('ralph');
 
-=item
-B<write_acl>
+=item B<write_acl>
+
 takes no arguments, writes out the current acl object structure to 
 the acl_file specified in the constructor.
 
 Example:
   $acl->write_acl;
 
-=item
-B<write_pretty>
+=item B<write_pretty>
+
 the same as write_acl, but does it with extra whitespace to line 
 things up.
 

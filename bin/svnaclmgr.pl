@@ -40,22 +40,23 @@ if ($perm =~ /^(\+|\-)_user_/) {
     $acl->write_pretty;
 } elsif ($perm =~ /^(\+|\-)(\w*)$/) {
     my $op = $1;
+    my $flags = $2;
     # this is a resource add / del / modify.
     if ($op eq "+") {
-        if (my $resource = $acl->resource($resource)) {
-            my %authorized = %{$resource->authorized};
+        if (my $r = $acl->resource($resource)) {
+            my %authorized = %{$r->authorized};
             foreach my $user (@targets) {
                 if (exists($authorized{$user})) {
-                    my $final_flags = merge_flags($authorized{$user}, $2);
-                    $resource->authorize($user, $final_flags);
+                    my $final_flags = merge_flags($authorized{$user}, $flags);
+                    $r->authorize($user, $final_flags);
                 } else {
                     # user doesn't have any access yet.
-                    $resource->authorize($user, $2);
+                    $r->authorize($user, $flags);
                 }
             }
          } else {
              # new resource
-             my %authorized = map { $_ => $2 } @targets;
+             my %authorized = map { $_ => $flags } @targets;
              $acl->add_resource($resource, %authorized);
          }
     } else {
@@ -63,7 +64,7 @@ if ($perm =~ /^(\+|\-)_user_/) {
             my %authorized = %{$resource->authorized};
             foreach my $user (@targets) {
                 if (exists($authorized{$user})) {
-                    my $final_flags = remove_flags($authorized{$user}, $2);
+                    my $final_flags = remove_flags($authorized{$user}, $flags);
                     if ($final_flags) {
                         $resource->authorize($user, $final_flags);
                     } else {

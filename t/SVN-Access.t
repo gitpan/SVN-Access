@@ -24,6 +24,13 @@ $acl->add_resource('/', '@folks', 'rw');
 is($acl->resource('/')->authorized->{'@folks'}, 'rw', "Make sure we added these folks to the '/' resource.");
 $acl->write_acl;
 
+$acl->add_resource('/test');
+is(ref($acl->resource('/test')), 'SVN::Access::Resource', "Do empty resources show up in the array?");
+$acl->write_acl;
+
+$acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
+is(ref($acl->resource('/test')), 'SVN::Access::Resource', "Do empty resources show up in the array after re-parsing the file?");
+
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 is(scalar($acl->group('folks')->members), 3, "Checking our group after the write-out.");
 $acl->remove_group('folks');
@@ -32,6 +39,7 @@ $acl->write_acl;
 
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 $acl->remove_resource('/');
+$acl->remove_resource('/test');
 is(defined($acl->resources), '', "Making sure resources is undefined when we delete the last one");
 $acl->write_acl;
 

@@ -1,6 +1,12 @@
 Revision history for Perl extension SVN::ACL.
 
 0.01  Wed May 23 13:42:14 2007
-	- original version; created by h2xs 1.23 with options
-		-AXc -n SVN::ACL
+	- original version
 
+0.02
+    - fixed bug in svnaclmgr.pl when dealing with resources in empty / just initialized
+      acl files.
+    - fixed documentation bugs
+    - fixed several bugs having mostly to do with groups w/ no members and resources w/ 
+      no authorized users.
+    - fixed readme file.

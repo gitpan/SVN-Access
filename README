@@ -1,16 +1,17 @@
-SVN-ACL version 0.01
+SVN-Access version 0.01
 ====================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+DESCRIPTION
 
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
+SVN::Access includes both an object oriented interface for manipulating
+SVN access files (AuthzSVNAccessFile files), as well as a command line
+interface to that object oriented programming interface (svnaclmgr.pl).
+
+Gil Hicks has a much better description of this module...
+
+Definitely a jackhammer, I'm in there with some pressure and when I'm
+done, you're not the same as before.  You're changed.
+
 
 INSTALLATION
 
@@ -20,12 +21,6 @@ To install this module type the following:
    make
    make test
    make install
-
-DEPENDENCIES
-
-This module requires these other modules and libraries:
-
-  blah blah blah
 
 COPYRIGHT AND LICENCE
 

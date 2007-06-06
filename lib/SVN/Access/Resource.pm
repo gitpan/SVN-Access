@@ -19,6 +19,14 @@ sub authorized {
     return undef;
 }
 
+sub is_authorized {
+    my ($self, $entity) = @_;
+    if (defined($self->{authorized}) && exists($self->{authorized}->{$entity})) {
+        return 1;
+    }
+    return undef;
+}
+
 sub authorize {
     my ($self, $entity, $access) = @_;
     $self->{authorized}->{$entity} = $access;
@@ -36,11 +44,10 @@ sub name {
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
-SVN::Access::Resource - Object representing a SVN Access file group!
+SVN::Access::Resource - Object representing a SVN Access file resource
 
 =head1 SYNOPSIS
 
@@ -65,10 +72,10 @@ B<SVN::Access::Resource> is an object wrapper around a SVN::Access resource.
 
 =head1 METHODS
 
-=over 2
+=over 4
 
-=item 
-B<new>
+=item B<new>
+
 constructor, the most basic kind, i'm only looking for authorized (hashref), and 
 name.
 
@@ -82,30 +89,30 @@ Example:
       }
   );
 
-=item
-B<authorized>
+=item B<authorized>
+
 returns a hash reference containing (user, access) pairs.
 
 Example:
   my %authorized = %{$resource->authorized};
 
-=item
-B<authorize>
+=item B<authorize>
+
 authorizes a user / group for access to this resource.
 
 Example:
   $resource->authorize('@admins' => 'rw'); # give the admins commit
   $resource->authorize('*', => 'r'); # give anonymous read only
 
-=item
-B<deauthorize>
+=item B<deauthorize>
+
 revokes the user / group's access to this resource.
 
 Example:
   $resource->deauthorize('rick'); # later, rick.
 
-=item
-B<name>
+=item B<name>
+
 accessor method that returns the resource's name (path)
 
 =back
