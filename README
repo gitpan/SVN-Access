@@ -5,13 +5,8 @@ DESCRIPTION
 
 SVN::Access includes both an object oriented interface for manipulating
 SVN access files (AuthzSVNAccessFile files), as well as a command line
-interface to that object oriented programming interface (svnaclmgr.pl).
-
-Gil Hicks has a much better description of this module...
-
-Definitely a jackhammer, I'm in there with some pressure and when I'm
-done, you're not the same as before.  You're changed.
-
+interface to that object oriented programming interface (svnaclmgr.pl) 
+which is in the examples/ directory.
 
 INSTALLATION
 

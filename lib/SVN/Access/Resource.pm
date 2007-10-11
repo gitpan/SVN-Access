@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 sub new {
     my ($class, %attr) = @_;
@@ -80,6 +80,7 @@ constructor, the most basic kind, i'm only looking for authorized (hashref), and
 name.
 
 Example:
+
   my $resource = SVN::Access::Resource->new(
       name => '/',
       authorized => {
@@ -94,6 +95,7 @@ Example:
 returns a hash reference containing (user, access) pairs.
 
 Example:
+
   my %authorized = %{$resource->authorized};
 
 =item B<authorize>
@@ -101,6 +103,7 @@ Example:
 authorizes a user / group for access to this resource.
 
 Example:
+
   $resource->authorize('@admins' => 'rw'); # give the admins commit
   $resource->authorize('*', => 'r'); # give anonymous read only
 
@@ -109,6 +112,7 @@ Example:
 revokes the user / group's access to this resource.
 
 Example:
+
   $resource->deauthorize('rick'); # later, rick.
 
 =item B<name>

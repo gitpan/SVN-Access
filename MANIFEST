@@ -1,4 +1,4 @@
-bin/svnaclmgr.pl
+examples/svnaclmgr.pl
 Makefile.PL
 MANIFEST
 lib/SVN/Access/Group.pm

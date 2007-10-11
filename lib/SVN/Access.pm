@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub new {
     my ($class, %attr) = @_;
@@ -127,7 +127,7 @@ sub add_resource {
     my ($self, $resource_name, %access) = @_;
     if ($self->resource($resource_name)) {
         die "Can't add new resource $resource_name: resource already exists!\n";
-    } elsif ($resource_name !~ /^\w*\:*\//) {
+    } elsif ($resource_name !~ /^(?:\S+\:)?\/\S*$/) { # Thanks Matt
         die "Invalid resource format in $resource_name! (format 'repo:/path')!\n";
     } else {
         my $resource = SVN::Access::Resource->new(
@@ -251,12 +251,8 @@ SVN::Access - Perl extension to manipulate SVN Access files
 
 B<SVN::Access> includes both an object oriented interface for manipulating 
 SVN access files (AuthzSVNAccessFile files), as well as a command line 
-interface to that object oriented programming interface (B<svnaclmgr.pl>).
-
-Gil Hicks has a much better description of this module...
-
-B<Definitely a jackhammer, I'm in there with some pressure and when I'm done, you're not the same as before. 
-You're changed.>
+interface to that object oriented programming interface (B<svnaclmgr.pl>) in 
+the examples/ directory.
 
 =head1 METHODS
 
@@ -268,6 +264,7 @@ the constructor, takes key / value pairs.  only one is required.. in fact
 only one is used right now.  acl_file.
 
 Example:
+
   my $acl = SVN::Access->new(acl_file   =>  '/path/to/my/acl.conf');
 
 =item B<add_resource>
@@ -277,6 +274,7 @@ are only to the object structure in memory, and one must call the B<write_acl>
 method, or the B<write_pretty> method to commit them.
 
 Example:
+
   $acl->add_resource('/',
     rick    =>  'rw',
     steve   =>  'rw',
@@ -290,6 +288,7 @@ these changes are only to the object structure in memory, and must be commited
 with a write_ method.
 
 Example:
+
   $acl->remove_resource('/');
 
 =item B<resources>
@@ -297,6 +296,7 @@ Example:
 returns an array of resource objects, takes no arguments.
 
 Example:
+
   for($acl->resources) {
       print $_->name . "\n";
   }
@@ -306,6 +306,7 @@ Example:
 resolves a resource name to its B<SVN::Access::Resource> object.
 
 Example:
+
   my $resource = $acl->resource('/');
 
 =item B<add_group>
@@ -315,6 +316,7 @@ only to the object structure in memory, and must be written out with
 B<write_acl> or B<write_pretty>.
 
 Example:
+
   $acl->add_group('stooges', 'larry', 'curly', 'moe', 'shemp');
 
 =item B<remove_group>
@@ -324,6 +326,7 @@ are only to the object structure in memory, and must be written out
 with B<write_acl> or B<write_pretty>.
 
 Example:
+
   $acl->remove_group('stooges');
 
 =item B<groups>
@@ -331,6 +334,7 @@ Example:
 returns an array of group objects, takes no arguments.
 
 Example:
+
   for($acl->groups) {
       print $_->name . "\n";
   }
@@ -340,6 +344,7 @@ Example:
 resolves a group name to its B<SVN::Access::Group> object.
 
 Example:
+
   $acl->group('pants_wearers')->add_member('ralph');
 
 =item B<write_acl>
@@ -348,6 +353,7 @@ takes no arguments, writes out the current acl object structure to
 the acl_file specified in the constructor.
 
 Example:
+
   $acl->write_acl;
 
 =item B<write_pretty>
@@ -356,6 +362,7 @@ the same as write_acl, but does it with extra whitespace to line
 things up.
 
 Example:
+
   $acl->write_pretty;
 
 =back

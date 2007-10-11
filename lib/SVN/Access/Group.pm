@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 sub new {
     my ($class, %attr) = @_;
@@ -93,6 +93,7 @@ members (arrayref), and the name of the group.  the meat and potatoes if
 you will.
 
 Example:
+
   my $group = SVN::Access::Group->new(
       members   => [qw/ray bob elle/],
       name      => "Carpenters",
@@ -105,6 +106,7 @@ Example:
 returns a list of the group's members.
 
 Example:
+
   my @members = $group->members;
 
 =item B<remove_member>
@@ -112,6 +114,7 @@ Example:
 removes a member from the group.
 
 Example:
+
   $group->remove_member("ray");
 
 =item B<add_member>
@@ -121,6 +124,7 @@ is inconsistent with the rest of the interface, so expect either other methods
 to start having this, or expect this functionality to go away.
 
 Example:
+
   print $group->add_member("becky");
   # should print "Member becky successfully added to Carpenters\n"
 
@@ -132,6 +136,7 @@ Example:
 returns true (the member's name) if the member exists.
 
 Example:
+
   if ($group->member_exists("ray")) {
       print "i thought i fired him...\n";
       $group->remove_member("ray"); # carpenters don't need SVN access anyway

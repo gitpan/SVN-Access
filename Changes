@@ -1,4 +1,4 @@
-Revision history for Perl extension SVN::ACL.
+Revision history for Perl extension SVN::Access:
 
 0.01  Wed May 23 13:42:14 2007
 	- original version
@@ -10,3 +10,8 @@ Revision history for Perl extension SVN::ACL.
     - fixed several bugs having mostly to do with groups w/ no members and resources w/ 
       no authorized users.
     - fixed readme file.
+
+0.03
+    - reorganized module, moved the svnaclmgr.pl script to examples/ from bin/
+    - cleaned up documentation
+
