@@ -15,3 +15,7 @@ Revision history for Perl extension SVN::Access:
     - reorganized module, moved the svnaclmgr.pl script to examples/ from bin/
     - cleaned up documentation
 
+0.04
+    - added verify_acl functionality, changed write_acl and write_pretty to utilize 
+      new functionality
+

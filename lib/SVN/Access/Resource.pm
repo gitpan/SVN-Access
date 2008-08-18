@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub new {
     my ($class, %attr) = @_;
@@ -131,7 +131,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Michael Gregorowicz
+Copyright (C) 2008 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub new {
     my ($class, %attr) = @_;
@@ -60,8 +60,40 @@ sub parse_acl {
     close (ACL);
 }
 
+sub verify_acl {
+    my ($self) = @_;
+
+    # Check for references to undefined groups (Thanks Jesse!)
+    my (%groups, @errors);
+    if ($self->groups) {
+        foreach my $group ($self->groups) {
+            $groups{$group->name}++;
+        }
+    }
+
+    foreach my $resource ($self->resources) {
+        if (defined($resource) && $resource->authorized) {
+            foreach my $k (keys %{$resource->authorized}) {
+                if ( $k =~ /^@(.*)/ ) {
+                    unless ( $groups{$1} ) {
+                        push(@errors, "[error] An authz rule (" . $resource->name . ") refers to group '\@$1', which is undefined");
+                    }
+                }
+            }
+        }
+    }
+
+    return scalar(@errors) ? join("\n", @errors) : undef;
+}
+
 sub write_acl {
     my ($self) = @_;
+
+    # verify the ACL has no errors before writing it out
+    if (my $error = $self->verify_acl) {
+        die "Error found in ACL:\n$error\n";
+    }
+
     open (ACL, '>', $self->{acl_file}) or warn "Can't open ACL file " . $self->{acl_file} . " for writing: $!\n";
     foreach my $resource ($self->resources) {
         if (defined($resource) && $resource->authorized) {
@@ -83,6 +115,11 @@ sub write_acl {
 
 sub write_pretty {
     my ($self) = @_;
+
+    # verify the ACL has no errors before writing it out
+    if (my $error = $self->verify_acl) {
+        die "Error found in ACL:\n$error\n";
+    }
 
     my $max_len = 0;
 
@@ -365,6 +402,21 @@ Example:
 
   $acl->write_pretty;
 
+=item B<verify_acl>
+
+does a pre-flight check of the acl, and returns any errors found 
+delimited by new lines.  this routine is called by write_acl and
+write_pretty, where these errors will be considered fatal.  be
+sure to either call this before $acl->write_*, OR use eval { } 
+to capture the return of verify_acl into $@.
+
+Example:
+  if (my $error = $acl->verify_acl) {
+    print "Problem found in your ACL: $error\n";
+  } else {
+    $acl->write_acl;
+  }
+
 =back
 
 =head1 SEE ALSO
@@ -377,7 +429,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Michael Gregorowicz
+Copyright (C) 2008 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

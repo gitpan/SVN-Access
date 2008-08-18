@@ -36,13 +36,22 @@ is(scalar($acl->group('folks')->members), 3, "Checking our group after the write
 $acl->remove_group('folks');
 is(defined($acl->groups), '', "Making sure groups is undefined when we delete the last one");
 
+# Jesse Thompson's verify_acl tests
+$acl->add_resource('/new', '@doesntexist', 'rw');
+eval {
+    $acl->write_acl;
+};
+ok(defined($@), 'We encountered a fatal error when trying to write an erroneous ACL.');
+# save future writes the grief
+$acl->remove_resource('/new');
+
 # little bit of testing for Matt Smith's new regex.
 $acl->add_resource('my-repo:/test/path', 'mikey_g',  'rw');
 is($acl->resource('my-repo:/test/path')->authorized->{mikey_g}, 'rw', 'Can we call up perms on the new path?');
+$acl->remove_resource('/');
 $acl->write_acl;
 
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
-$acl->remove_resource('/');
 $acl->remove_resource('/test');
 $acl->remove_resource('my-repo:/test/path');
 
