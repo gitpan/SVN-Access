@@ -4,10 +4,23 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+use Tie::IxHash;
+
+our $VERSION = '0.05';
 
 sub new {
     my ($class, %attr) = @_;
+
+	# keep our hashes in order.  Thanks Kane of HackThisSite.org
+	my (%authorized, $t);
+	$t = tie(%authorized, 'Tie::IxHash');
+	
+	# make sure we copy in stuff that was passed.
+	%authorized = (@{$attr{authorized}});
+	
+	$attr{authorized} = \%authorized;
+	$attr{_authorized_tie} = $t;
+	
     return bless(\%attr, $class);
 }
 
@@ -28,8 +41,13 @@ sub is_authorized {
 }
 
 sub authorize {
-    my ($self, $entity, $access) = @_;
-    $self->{authorized}->{$entity} = $access;
+    my ($self, @rest) = @_;
+
+	if ($rest[$#rest] =~ /^\d+$/o) {		
+		$self->{_authorized_tie}->Splice($rest[$#rest], 0, @rest[0..$#rest - 1]);
+	} else {
+		$self->{_authorized_tie}->Push(@rest);
+	}
 }
 
 sub deauthorize {
@@ -131,7 +149,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by Michael Gregorowicz
+Copyright (C) 2009 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

@@ -31,6 +31,51 @@ $acl->write_acl;
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 is(ref($acl->resource('/test')), 'SVN::Access::Resource', "Do empty resources show up in the array after re-parsing the file?");
 
+$acl->add_resource('/kanetest', 
+    joey => 'rw',
+    billy => 'r',
+    sam => 'r',
+);
+
+$acl->resource('/kanetest')->authorize(
+    judy => 'rw',
+    phil => 'r',
+    frank => '',
+    wanda => 'r'
+);
+
+$acl->resource('/kanetest')->authorize(sammy => 'r', 2);
+$acl->write_acl;
+
+my $test_contents = <<EOF;
+[/]
+\@folks = rw
+
+[/test]
+
+[/kanetest]
+joey = rw
+billy = r
+sammy = r
+sam = r
+judy = rw
+phil = r
+frank = 
+wanda = r
+
+[groups]
+folks = bob, ed, frank
+EOF
+
+my $actual_contents;
+open(TEST_ACL, '<', 'svn_access_test.conf');
+{
+    local $/;
+    $actual_contents = <TEST_ACL>;
+}
+
+is($actual_contents, $test_contents, "Making sure our output remains in-order.");
+
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 is(scalar($acl->group('folks')->members), 3, "Checking our group after the write-out.");
 $acl->remove_group('folks');
@@ -54,6 +99,7 @@ $acl->write_acl;
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 $acl->remove_resource('/test');
 $acl->remove_resource('my-repo:/test/path');
+$acl->remove_resource('/kanetest');
 
 is(defined($acl->resources), '', "Making sure resources is undefined when we delete the last one");
 $acl->write_acl;

@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub new {
     my ($class, %attr) = @_;
@@ -161,7 +161,7 @@ sub write_pretty {
 }
 
 sub add_resource {
-    my ($self, $resource_name, %access) = @_;
+    my ($self, $resource_name, @access) = @_;
     if ($self->resource($resource_name)) {
         die "Can't add new resource $resource_name: resource already exists!\n";
     } elsif ($resource_name !~ /^(?:\S+\:)?\/\S*$/) { # Thanks Matt
@@ -169,7 +169,7 @@ sub add_resource {
     } else {
         my $resource = SVN::Access::Resource->new(
             name        =>      $resource_name,
-            authorized  =>      \%access,
+            authorized  =>      \@access,
         );
         push(@{$self->{acl}->{resources}}, $resource);
         return $resource;
@@ -252,8 +252,6 @@ sub group {
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
-
 =head1 NAME
 
 SVN::Access - Perl extension to manipulate SVN Access files
@@ -411,6 +409,7 @@ sure to either call this before $acl->write_*, OR use eval { }
 to capture the return of verify_acl into $@.
 
 Example:
+
   if (my $error = $acl->verify_acl) {
     print "Problem found in your ACL: $error\n";
   } else {
@@ -429,7 +428,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by Michael Gregorowicz
+Copyright (C) 2009 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
