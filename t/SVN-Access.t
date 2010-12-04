@@ -31,29 +31,37 @@ $acl->write_acl;
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 is(ref($acl->resource('/test')), 'SVN::Access::Resource', "Do empty resources show up in the array after re-parsing the file?");
 
-$acl->add_resource('/kanetest', 
+$acl->add_resource('repo:/something with spaces', mike => 'rw');
+
+$acl->add_resource('/kagetest', 
     joey => 'rw',
     billy => 'r',
     sam => 'r',
 );
 
-$acl->resource('/kanetest')->authorize(
+$acl->resource('/kagetest')->authorize(
     judy => 'rw',
     phil => 'r',
     frank => '',
     wanda => 'r'
 );
 
-$acl->resource('/kanetest')->authorize(sammy => 'r', 2);
+$acl->resource('/kagetest')->authorize(sammy => 'r', 2);
 $acl->write_acl;
 
 my $test_contents = <<EOF;
+[groups]
+folks = bob, ed, frank
+
 [/]
 \@folks = rw
 
 [/test]
 
-[/kanetest]
+[repo:/something with spaces]
+mike = rw
+
+[/kagetest]
 joey = rw
 billy = r
 sammy = r
@@ -63,8 +71,6 @@ phil = r
 frank = 
 wanda = r
 
-[groups]
-folks = bob, ed, frank
 EOF
 
 my $actual_contents;
@@ -94,12 +100,18 @@ $acl->remove_resource('/new');
 $acl->add_resource('my-repo:/test/path', 'mikey_g',  'rw');
 is($acl->resource('my-repo:/test/path')->authorized->{mikey_g}, 'rw', 'Can we call up perms on the new path?');
 $acl->remove_resource('/');
+
+# Matt's regex is updated now.. we are allowed to have spaces in ACLs
+$acl->add_resource('my-repo2:/this/that/the other/thing');
 $acl->write_acl;
+
 
 $acl = SVN::Access->new(acl_file => 'svn_access_test.conf');
 $acl->remove_resource('/test');
 $acl->remove_resource('my-repo:/test/path');
-$acl->remove_resource('/kanetest');
+$acl->remove_resource('/kagetest');
+$acl->remove_resource('my-repo2:/this/that/the other/thing');
+$acl->remove_resource('repo:/something with spaces');
 
 is(defined($acl->resources), '', "Making sure resources is undefined when we delete the last one");
 $acl->write_acl;

@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub new {
     my ($class, %attr) = @_;
@@ -95,6 +95,16 @@ sub write_acl {
     }
 
     open (ACL, '>', $self->{acl_file}) or warn "Can't open ACL file " . $self->{acl_file} . " for writing: $!\n";
+    
+    # groups first for legacy subversion support
+    if ($self->groups) {
+        print ACL "[groups]\n";
+        foreach my $group ($self->groups) {
+            print ACL $group->name . " = " . join(', ', $group->members) . "\n";
+        }
+        print ACL "\n";
+    }
+    
     foreach my $resource ($self->resources) {
         if (defined($resource) && $resource->authorized) {
             print ACL "[" . $resource->name . "]\n";
@@ -104,12 +114,7 @@ sub write_acl {
             print ACL "\n";
         }
     }
-    if ($self->groups) {
-        print ACL "[groups]\n";
-        foreach my $group ($self->groups) {
-            print ACL $group->name . " = " . join(', ', $group->members) . "\n";
-        }
-    }
+    
     close(ACL);
 }
 
@@ -142,6 +147,15 @@ sub write_pretty {
     }
 
     open (ACL, '>', $self->{acl_file}) or warn "Can't open ACL file " . $self->{acl_file} . " for writing: $!\n";
+    
+    # groups first for legacy svn support
+    if ($self->groups) {
+        print ACL "[groups]\n";
+        foreach my $group ($self->groups) {
+            print ACL $group->name . " " x ($max_len - length($group->name)) . " = " . join(', ', $group->members) . "\n";
+        }
+    }
+    
     foreach my $resource ($self->resources) {
         if (defined($resource) && $resource->authorized) {
             print ACL "[" . $resource->name . "]\n";
@@ -151,12 +165,6 @@ sub write_pretty {
             print ACL "\n";
         }
     }
-    if ($self->groups) {
-        print ACL "[groups]\n";
-        foreach my $group ($self->groups) {
-            print ACL $group->name . " " x ($max_len - length($group->name)) . " = " . join(', ', $group->members) . "\n";
-        }
-    }
     close(ACL);
 }
 
@@ -164,7 +172,7 @@ sub add_resource {
     my ($self, $resource_name, @access) = @_;
     if ($self->resource($resource_name)) {
         die "Can't add new resource $resource_name: resource already exists!\n";
-    } elsif ($resource_name !~ /^(?:\S+\:)?\/\S*$/) { # Thanks Matt
+    } elsif ($resource_name !~ /^(?:\S+\:)?\/.*$/) { # Thanks Matt
         die "Invalid resource format in $resource_name! (format 'repo:/path')!\n";
     } else {
         my $resource = SVN::Access::Resource->new(
@@ -428,7 +436,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Michael Gregorowicz
+Copyright (C) 2010 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
