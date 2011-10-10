@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 sub new {
     my ($class, %attr) = @_;
@@ -32,21 +32,26 @@ sub parse_acl {
     my $current_resource;
     while (my $line = <ACL>) {
         # ignore comments
+        $line =~ s/\s*#.*$//;
         next if $line =~ /^#/;
-        next if $line =~ /^[\s\r\n]+$/;
-        if ($line =~ /^\[\s*(.+?)\s*\][\r\n]+$/) {
+        $line =~ s/[\s\r\n]+$//;
+        next unless $line;
+        if ($line =~ /^\[\s*(.+?)\s*\]$/) {
             # this line is defining a new resource.
             $current_resource = $1;
-            unless ($current_resource eq "groups") {
+            unless ($current_resource =~ /^(?:groups|aliases)$/) {
                 $self->add_resource($current_resource);
             }
         } else {
             # both groups and resources need this parsed.
-            my ($k, $v) = $line =~ /^(.+?)\s*=\s*(.*)[\r\n]+$/;
+            my ($k, $v) = $line =~ /^(.+?)\s*=\s*(.*?)$/;
 
             if ($current_resource eq "groups") {
                 # this is a group
                 $self->add_group($k, split(/\s*,\s*/, $v));
+            } elsif ($current_resource eq "aliases") {
+                # aliases are simple k=v, so let's just store them in ourselves.
+                $self->add_alias($k, $v);
             } else {
                 # this is a generic resource
                 if (my $resource = $self->resource($current_resource)) {
@@ -57,6 +62,12 @@ sub parse_acl {
             }
         }
     }
+    
+    # make sure this isn't empty.
+    unless (ref($self->{acl}->{aliases}) eq "HASH") {
+        $self->{acl}->{aliases} = {};
+    }
+    
     close (ACL);
 }
 
@@ -96,7 +107,16 @@ sub write_acl {
 
     open (ACL, '>', $self->{acl_file}) or warn "Can't open ACL file " . $self->{acl_file} . " for writing: $!\n";
     
-    # groups first for legacy subversion support
+    # aliases now supported!
+    if (scalar(keys %{$self->aliases})) {
+        print ACL "[aliases]\n";
+        foreach my $alias (keys %{$self->aliases}) {
+            print ACL $alias . " = " . $self->aliases->{$alias} . "\n";
+        }
+        print ACL "\n";
+    }
+    
+    # groups now second to aliases
     if ($self->groups) {
         print ACL "[groups]\n";
         foreach my $group ($self->groups) {
@@ -130,6 +150,12 @@ sub write_pretty {
 
     # Compile a list of names that will appear on the left side
     my @names;
+    if (scalar(keys %{$self->aliases})) {
+        foreach my $alias (keys %{$self->aliases}) {
+            push(@names, $alias);
+        }
+    }
+    
     if ($self->groups) {
         for ($self->groups) {
             push(@names, $_->name);
@@ -148,12 +174,22 @@ sub write_pretty {
 
     open (ACL, '>', $self->{acl_file}) or warn "Can't open ACL file " . $self->{acl_file} . " for writing: $!\n";
     
-    # groups first for legacy svn support
+    # aliases now fully supported!
+    if (scalar(keys %{$self->aliases})) {
+        print ACL "[aliases]\n";
+        foreach my $alias (keys %{$self->aliases}) {
+            print ACL $alias . " " x ($max_len - length($alias)) . " = " . $self->aliases->{$alias} . "\n";
+        }
+        print "\n";
+    } 
+    
+    # groups now second?
     if ($self->groups) {
         print ACL "[groups]\n";
         foreach my $group ($self->groups) {
             print ACL $group->name . " " x ($max_len - length($group->name)) . " = " . join(', ', $group->members) . "\n";
         }
+        print "\n";
     }
     
     foreach my $resource ($self->resources) {
@@ -168,8 +204,39 @@ sub write_pretty {
     close(ACL);
 }
 
+sub add_alias {
+    my ($self, $alias_name, $aliased) = @_;
+    $self->{acl}->{aliases}->{$alias_name} = $aliased;
+}
+
+sub remove_alias {
+    my ($self, $alias_name) = @_;
+    delete $self->{acl}->{aliases}->{$alias_name};
+}
+
+sub alias {
+    my ($self, $alias_name) = @_;
+    if (exists ($self->{acl}->{aliases}->{$alias_name})) {
+        return $self->{acl}->{aliases}->{$alias_name};
+    }
+    return undef;
+}
+
+sub aliases {
+    my ($self) = @_;              
+    # give em something if we got nothing!
+    unless (ref($self->{acl}->{aliases}) eq "HASH") {
+        $self->{acl}->{aliases} = {};
+    }
+    return $self->{acl}->{aliases};
+}
+
 sub add_resource {
     my ($self, $resource_name, @access) = @_;
+    if ($resource_name eq "name") {
+        $resource_name = shift(@access);
+    }
+    
     if ($self->resource($resource_name)) {
         die "Can't add new resource $resource_name: resource already exists!\n";
     } elsif ($resource_name !~ /^(?:\S+\:)?\/.*$/) { # Thanks Matt
@@ -270,10 +337,7 @@ SVN::Access - Perl extension to manipulate SVN Access files
   my $acl = SVN::Access->new(acl_file   =>  '/usr/local/svn/conf/my_first_dot_com.conf');
 
   # add a group to the config
-  $acl->add_group(
-      name      =>      'stooges',
-      members   =>      [qw/larry curly moe shemp/],
-  );
+  $acl->add_group('stooges', qw/larry curly moe shemp/);
 
   # write out the acl (thanks Gil)
   $acl->write_acl;
@@ -282,10 +346,11 @@ SVN::Access - Perl extension to manipulate SVN Access files
   # our prized intellectual property, the free car giver-awayer.. 
   # (thats how we get users to the site.)
   $acl->add_resource(
-      name       => '/free_car_giver_awayer/branches/prod_1.21-sammy_hagar',
-      authorized => {
-          '@stooges' => 'rw',
-      }
+      # resource path
+      '/free_car_giver_awayer/branches/prod_1.21-sammy_hagar',
+
+      # permissions
+      '@stooges' => 'rw',
   );
 
   $acl->write_pretty; # with the equals signs all lined up.
@@ -424,6 +489,39 @@ Example:
     $acl->write_acl;
   }
 
+=item B<add_alias>
+
+adds an alias to [aliases], takes 2 arguments: the alias name and
+the aliased user.
+
+Example: 
+  $acl->add_alias('mikey', 'uid=mgregorowicz,ou=people,dc=mg2,dc=org');
+
+=item B<remove_alias>
+
+removes an alias by name, takes the alias name as an argument.
+
+Example:
+  $acl->remove_alias('mikey');
+  
+=item B<alias>
+
+returns the value of an alias, uses exists() first so it will not
+autovivify the key in the hash.
+
+Example:
+  print $acl->alias('mikey') . "\n";
+  
+=item B<aliases>
+
+returns a hashref that contains the aliases.  editing this hashref
+will edit the data inside the $acl object.
+
+Example:
+  foreach my $alias (keys %{$acl->aliases}) {
+    print "$alias: " . $acl->aliases->{$alias} . "\n";
+  }
+
 =back
 
 =head1 SEE ALSO
@@ -436,7 +534,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010 by Michael Gregorowicz
+Copyright (C) 2011 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

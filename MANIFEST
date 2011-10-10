@@ -1,4 +1,5 @@
 examples/svnaclmgr.pl
+bin/.exists
 Makefile.PL
 MANIFEST
 lib/SVN/Access/Group.pm
