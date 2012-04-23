@@ -6,7 +6,7 @@ use warnings;
 
 use Tie::IxHash;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub new {
     my ($class, %attr) = @_;
@@ -151,7 +151,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2011 by Michael Gregorowicz
+Copyright (C) 2012 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

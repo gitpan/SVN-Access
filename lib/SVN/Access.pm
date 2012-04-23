@@ -7,7 +7,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub new {
     my ($class, %attr) = @_;
@@ -30,21 +30,42 @@ sub parse_acl {
     my ($self) = @_;
     open(ACL, '<', $self->{acl_file}) or die "Can't open SVN Access file " . $self->{acl_file} . ": $!";
     my $current_resource;
+    my $statement;
     while (my $line = <ACL>) {
-        # ignore comments
-        $line =~ s/\s*#.*$//;
+        # ignore comments (properly defined)
         next if $line =~ /^#/;
+
+        # get rid of trailing whitespace.
         $line =~ s/[\s\r\n]+$//;
         next unless $line;
-        if ($line =~ /^\[\s*(.+?)\s*\]$/) {
-            # this line is defining a new resource.
+
+        # handle line continuations
+        if ($line =~ /^\s+(.+)$/) {
+            $statement .= " $1";
+        } else {
+            $statement = $line;
+        }
+
+        # lookahead and see if the next line is a line continuation
+        my $pos = tell(ACL);
+        my $nextline = <ACL>;
+        seek(ACL, $pos, 0); # rewind the filehandle to where we were.
+
+        if ($nextline && $nextline =~ /^[ \t]+/) {
+            next;
+        }
+
+        next unless $statement;
+
+        if ($statement =~ /^\[\s*(.+?)\s*\]$/) {
+            # this statement is defining a new resource.
             $current_resource = $1;
             unless ($current_resource =~ /^(?:groups|aliases)$/) {
                 $self->add_resource($current_resource);
             }
         } else {
             # both groups and resources need this parsed.
-            my ($k, $v) = $line =~ /^(.+?)\s*=\s*(.*?)$/;
+            my ($k, $v) = $statement =~ /^(.+?)\s*=\s*(.*?)$/;
 
             if ($current_resource eq "groups") {
                 # this is a group
@@ -61,6 +82,8 @@ sub parse_acl {
                 }
             }
         }
+
+        $statement = undef;
     }
     
     # make sure this isn't empty.
@@ -534,7 +557,7 @@ Michael Gregorowicz, E<lt>mike@mg2.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2011 by Michael Gregorowicz
+Copyright (C) 2012 by Michael Gregorowicz
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

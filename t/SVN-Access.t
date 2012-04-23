@@ -90,7 +90,7 @@ $whitespace_at_end_test .= "          "; # <- have some whitespace!
 open(WSTEST, '>', 'whitespace_at_end_test.conf');
 print WSTEST $whitespace_at_end_test;
 close(WSTEST);
-$wstestacl = SVN::Access->new(acl_file => 'whitespace_at_end_test.conf');
+my $wstestacl = SVN::Access->new(acl_file => 'whitespace_at_end_test.conf');
 is(scalar($wstestacl->group('folks')->members), 3, "Sanity checking our whitespace test.");
 is($wstestacl->resource('/kagetest')->authorized->{wanda}, 'r', "Making sure there's no trailing whitespace after wanda's 'r' access.");
 
@@ -183,3 +183,34 @@ $acl->write_acl;
 is((stat('svn_access_test.conf'))[7], 0, "Making sure our SVN ACL file is zero bytes, and unlinking.");
 system("cat svn_access_test.conf");
 unlink('svn_access_test.conf');
+
+# test for line continuations and trailing comments
+open(LTEST, '>', 'line_cont.conf');
+print LTEST <<'CHUMBA';
+[groups]
+folks = bob, 
+ ed,
+	frank
+foo=bar # not allowed, baz
+# see libsvn_subr/config_file.c:svn_config__parse_file()
+[/]
+@folks = rw
+
+CHUMBA
+#/];# (keep emacs perl-mode happy)
+close(LTEST);
+
+$acl = SVN::Access->new(acl_file => 'line_cont.conf');
+ok(defined($acl), "Make sure we can parse file with line continuations");
+my @m = $acl->group('folks')->members;
+is($#m, 2, "Make sure group has three members, via continuations");
+is($m[2], "frank", "Make sure frank is at the end of the list");
+
+# check the trailing comment
+@m = $acl->group('foo')->members;
+is($#m, 1, "Make sure group has 2 members");
+is($m[0], "bar # not allowed", "make sure comment is appended as svn does");
+is($m[1], "baz", "make sure next entry is right");
+
+unlink('line_cont.conf');
+

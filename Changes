@@ -25,3 +25,6 @@ Revision history for Perl extension SVN::Access:
 0.06
     - updated the resource regex to allow paths with spaces
     - always print groups at the top to support legacy implementations of Subversion
+
+0.08
+    - implemented code that passes Trent's tests (line continuations)
